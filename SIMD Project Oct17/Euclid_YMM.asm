@@ -57,7 +57,7 @@ finish:
     vzeroupper
     ret
 
-Squareroot the total in xmm0, final result of Euclid
+;Squareroot the total in xmm0, final result of Euclid
 
 
 norm_ymm ENDP
