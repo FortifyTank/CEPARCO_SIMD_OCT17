@@ -1,3 +1,6 @@
+; Matthew Fabreas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
+
+
 ; x86-64 scalar
 ; rcx = A, rdx = n, result in xmm0
 
