@@ -1,28 +1,22 @@
-; Euclidean norm, scalar x86-64 (no SIMD)
-; double norm_asm(const double* A, long long n)
-; rcx = A, rdx = n, return value in xmm0
+; x86-64 scalar
+; rcx = A, rdx = n, result in xmm0
 
 .code
 norm_asm PROC
+    xorpd xmm0, xmm0
+    xor rax, rax
 
-    xorpd xmm0, xmm0                    ; sum = 0.0
-    xor rax, rax                        ; i = 0
-
-loopStart:
+L1:
     cmp rax, rdx
-    jae finish                          ; i >= n, done
-
-    movsd xmm1, QWORD PTR [rcx + rax * 8]   ; doubles are 8 bytes
-    mulsd xmm1, xmm1                    ; A[i] * A[i]
-    addsd xmm0, xmm1                    ; sum += A[i]^2
-
+    jge done
+    movsd xmm1, qword ptr [rcx + rax*8]
+    mulsd xmm1, xmm1
+    addsd xmm0, xmm1
     inc rax
-    jmp loopStart
+    jmp L1
 
-finish:
-    sqrtsd xmm0, xmm0                   ; Z = sqrt(sum), returned in xmm0
+done:
+    sqrtsd xmm0, xmm0
     ret
-
 norm_asm ENDP
-
 END
