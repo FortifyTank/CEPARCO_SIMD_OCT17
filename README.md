@@ -19,8 +19,9 @@ Open `SIMD Project Oct17.slnx` in Visual Studio 2026 and set the platform to **x
 
 ## Test Setup
 
+- **Machine:** _(CPU model, RAM)_
 - **Data:** `A[i] = sin(i * 0.001)`
-- **Vector sizes:** n = 2²⁰, 2²⁶, 2²⁹. 2³⁰ (8 GB) did not fit in the laptop's free RAM, so the program fell back to 2²⁹ (4 GB).
+- **Vector sizes:** n = 2²⁰, 2²⁶, 2³⁰. If 2³⁰ does not fit in free RAM, the program falls back to 2²⁹, then 2²⁸.
 - **Timing:** Only the kernel call is timed, using `QueryPerformanceCounter`. Each kernel is run once untimed as a warm-up, then the average of 30 runs is reported.
 - **Correctness:** The C kernel is the answer key. Each assembly kernel is marked correct if its result is within a relative difference of 1e-9 of C.
 
@@ -35,12 +36,11 @@ The SIMD loop only runs up to `n` rounded down to a multiple of 2 (XMM) or 4 (YM
 ## i. Program Output (Execution Time)
 
 **Debug**
-
-![Debug output](screenshots/debug_output.png)
+<img width="1200" height="497" alt="debug_output" src="https://github.com/user-attachments/assets/15f261a2-d639-4f49-b623-c2a87b601e92" />
 
 **Release**
 
-![Release output](screenshots/release_output.png)
+<img width="1919" height="1079" alt="Matt_SS" src="https://github.com/user-attachments/assets/e82b3eaa-6b19-4dfc-9d7b-cb5070c18abe" />
 
 ## ii. Execution Time and Comparison
 
@@ -50,9 +50,9 @@ Average execution time in ms over 30 runs.
 
 | n | C | x86-64 | XMM | YMM |
 |---|---|---|---|---|
-| 2²⁰ | 2.8814 | 0.6177 | 0.3168 | 0.2422 |
-| 2²⁶ | 193.0350 | 42.2312 | 25.6345 | 28.2766 |
-| 2²⁹ | 1576.4153 | 365.7957 | 234.7471 | 228.7997 |
+| 2²⁰ | 3.2420 | 1.3198 | 0.8691 | 0.6120 |
+| 2²⁶ | 197.3613 | 80.3425 | 46.4070 | 34.8181 |
+| 2³⁰ | 2802.3404 | 1293.7996 | 853.9873 | 682.4332 |
 
 **Release**
 
@@ -60,67 +60,71 @@ Average execution time in ms over 30 runs.
 |---|---|---|---|---|
 | 2²⁰ | | | | |
 | 2²⁶ | | | | |
-| 2²⁹ | | | | |
+| 2³⁰ | | | | |
 
 **Speedup over C (Debug)**
 
 | n | x86-64 | XMM | YMM |
 |---|---|---|---|
-| 2²⁰ | 4.66x | 9.10x | 11.90x |
-| 2²⁶ | 4.57x | 7.53x | 6.83x |
-| 2²⁹ | 4.31x | 6.72x | 6.89x |
+| 2²⁰ | 2.46x | 3.73x | 5.30x |
+| 2²⁶ | 2.46x | 4.25x | 5.67x |
+| 2³⁰ | 2.17x | 3.28x | 4.11x |
 
 **Speedup over x86-64 (Debug)**
 
-| n | Data size | XMM | YMM |
-|---|---|---|---|
-| 2²⁰ | 8 MB | 1.95x | 2.55x |
-| 2²⁶ | 512 MB | 1.65x | 1.49x |
-| 2²⁹ | 4 GB | 1.56x | 1.60x |
+| n | Data size | XMM | YMM | YMM vs XMM |
+|---|---|---|---|---|
+| 2²⁰ | 8 MB | 1.52x | 2.16x | 1.42x |
+| 2²⁶ | 512 MB | 1.73x | 2.31x | 1.33x |
+| 2³⁰ | 8 GB | 1.52x | 1.90x | 1.25x |
 
 **Why the kernels differ:**
 
-- **x86-64 vs Debug C:** Debug builds are not optimized, so the C loop stores `i` and `sum` to memory and reads them back on every iteration. The assembly version keeps everything in registers, which makes it about 4x faster.
+- **x86-64 vs Debug C:** Debug builds are not optimized, so the C loop stores `i` and `sum` to memory and reads them back on every iteration. The assembly version keeps everything in registers, which makes it about 2.2–2.5x faster.
 - **XMM vs x86-64:** XMM squares and adds 2 doubles per instruction, so the loop runs half as many times.
-- **YMM vs x86-64:** YMM handles 4 doubles per instruction, so the loop runs a quarter as many times. It is the fastest kernel on the small vector, but on the large vectors it is about the same speed as XMM (see viii).
+- **YMM vs x86-64:** YMM handles 4 doubles per instruction, so the loop runs a quarter as many times. YMM is the fastest kernel at every size.
 
 ## iii. Correctness Check (C)
 
-![C output](screenshots/check_c.png)
+<img width="520" height="327" alt="check_c" src="https://github.com/user-attachments/assets/fad8241c-62f1-4233-90ad-1dd5ed556f74" />
+
+C is the answer key, so its Z values are what the other kernels are checked against.
 
 ## iv. Correctness Check (x86-64)
 
-![x86-64 output](screenshots/check_asm.png)
+<img width="520" height="327" alt="check_asm" src="https://github.com/user-attachments/assets/709acd9e-0fc8-4210-b2b6-ade5f8f6b1b0" />
 
 ## v. Correctness Check (SIMD XMM)
 
-![XMM output](screenshots/check_xmm.png)
+<img width="520" height="327" alt="check_xmm" src="https://github.com/user-attachments/assets/aaa408c6-e08e-4f8c-83d3-10bc08e0bbb9" />
 
 ## vi. Correctness Check (SIMD YMM)
 
-![YMM output](screenshots/check_ymm.png)
+<img width="520" height="327" alt="check_ymm" src="https://github.com/user-attachments/assets/71a3fcef-d921-4b5d-ae69-9ba1286d1fc0" />
 
 ## vii. Boundary Check (SIMD XMM and YMM)
 
-![Boundary check](screenshots/boundary.png)
+<img width="620" height="115" alt="boundary" src="https://github.com/user-attachments/assets/d428dd5b-cc28-432c-8a68-cbe20c345af3" />
 
 The sizes 1, 3, 1000, 1001, 1002 and 1003 cover every leftover case: 0 or 1 element left for XMM, and 0 to 3 elements left for YMM. n = 1 and n = 3 also check the case where the YMM loop does not run at all because n is smaller than 4. All kernels matched C.
 
 ## viii. Analysis
 
-**Which one is fastest?** Both SIMD kernels are faster than x86-64, and x86-64 is faster than Debug C. YMM is the fastest on the 2²⁰ vector. On the 2²⁶ and 2²⁹ vectors, XMM and YMM are about equally fast, and XMM was even slightly faster at 2²⁶.
+**Which one is fastest?** YMM is the fastest at every size, followed by XMM, then x86-64, then Debug C. At 2³⁰, YMM is 4.11x faster than Debug C and 1.90x faster than x86-64.
 
-**Why is the speedup lower than the theoretical 2x and 4x?** In theory XMM should be 2x faster and YMM 4x faster than scalar code. At 2²⁰, XMM comes close (1.95x) and YMM reaches 2.55x, because the 8 MB vector is small enough to be served mostly from the CPU cache. At 2²⁶ and 2²⁹, both drop to about 1.5–1.6x, and YMM is no better than XMM.
+**Why is it faster?** YMM processes 4 doubles per instruction and XMM processes 2, so both need far fewer loop iterations than the scalar version. This means fewer loads, multiplies, adds and loop overhead for the same amount of data.
 
-This is because the kernel is **memory-bound**. Each element needs only one multiply and one add for every 8 bytes loaded, so the CPU finishes the math faster than RAM can deliver the data. On the large vectors, XMM and YMM both read at about 18–21 GB/s, which is close to the memory bandwidth of the laptop. Both kernels hit the same limit, so processing 4 elements per instruction instead of 2 no longer helps.
+**Why is the speedup lower than the theoretical 2x and 4x?** In theory XMM should be 2x faster and YMM 4x faster than scalar code. Instead, XMM reaches only 1.5–1.7x and YMM only 1.9–2.3x.
+
+The main reason is that the kernel is **memory-bound**. Each element needs only one multiply and one add for every 8 bytes loaded, so the CPU can do the math faster than RAM can deliver the data. YMM reads at about 13–15 GB/s at every size, including 2²⁰. This suggests that even the 8 MB vector is not fully served from cache on this machine. Once the CPU is waiting on memory, processing more elements per instruction does not help much. That is why YMM is only 1.25–1.42x faster than XMM even though its registers are twice as wide. The gap is smallest at 2³⁰ (8 GB), where every element has to come from RAM.
 
 Other reasons the speedup is below theory:
 
-- Each `vaddpd` has to wait for the previous one to finish because they all add into the same register.
+- Each `addsd` or `vaddpd` has to wait for the previous one to finish because they all add into the same register.
 - The loop counter, compare and jump still run on every iteration.
 - Laptop CPUs change clock speed with temperature and power, which adds noise to the timings.
 
-**Debug vs Release:**
+**Debug vs Release:** The assembly kernels are the same in both builds, because Debug and Release only change how the C code is compiled. The main difference between the two runs is therefore the C kernel.
 
 _(fill after Release run)_
 
@@ -130,9 +134,9 @@ _(fill after Release run)_
 
 ## ix. Problems Encountered and AHA Moments
 
-- **Not enough RAM for 2³⁰.** 2³⁰ doubles needs 8 GB, and 2²⁹ needs 4 GB. Windows can let a large allocation succeed by using the page file on disk, which would make the timings meaningless. To avoid this, the program checks free physical RAM with `GlobalMemoryStatusEx` before allocating and falls back to 2²⁹, then 2²⁸. The amount of free RAM changed between runs depending on what else was open. One run could not fit even 2²⁸ (2 GB), while the final run fit 2²⁹ (4 GB).
-- **SIMD results did not exactly match C.** The XMM and YMM results differed from C in the last few digits (relative difference up to about 2e-13). This happens because SIMD keeps several partial sums and adds them at the end, and floating-point addition gives slightly different results in a different order. The fix was to compare with a small tolerance instead of `==`.
+- **Not enough RAM for 2³⁰.** 2³⁰ doubles needs 8 GB. Windows can let a large allocation succeed by using the page file on disk, which would make the timings meaningless. To avoid this, the program checks free physical RAM with `GlobalMemoryStatusEx` before allocating and falls back to 2²⁹, then 2²⁸. One laptop could only fit 2²⁸ or 2²⁹ depending on what else was open, so the final results were run on a groupmate's laptop that could fit 2³⁰.
+- **SIMD results did not exactly match C.** The XMM and YMM results differed from C in the last few digits, with relative differences up to about 2e-13. This happens because SIMD keeps several partial sums and adds them at the end, and floating-point addition gives slightly different results in a different order. The fix was to compare with a small tolerance instead of `==`.
 - **Boundary elements.** A vector size like 1003 is not a multiple of 4. Rounding n down with `and r8, -4` and adding a scalar loop for the leftovers handles any n without reading past the end of the array.
+- **Timings vary between runs and machines.** The same program gave noticeably different times on the two laptops. For example, x86-64 at 2²⁰ took about 0.6 ms on one and 1.3 ms on the other. On the first laptop, XMM was even slightly faster than YMM at 2²⁶. This is why each kernel is averaged over 30 runs with a warm-up call, and why all results in this report come from one machine.
 - **AHA: XMM registers for scalar math.** The scalar x86-64 kernel uses `xmm0` and `xmm1` even though it is not SIMD. x86-64 does floating-point math in XMM registers, and the instruction decides how much is used: `mulsd` (scalar double) uses only the low lane, while `mulpd` (packed double) uses all lanes. `xmm0` is also where Windows x64 expects a returned `double`.
-- **Timings vary between runs.** Running the same program again gave noticeably different times. In one earlier run, YMM was 3.5x faster than scalar at 2²⁰ instead of 2.55x. This is why each kernel is averaged over 30 runs with a warm-up call, but laptop clock speed changes with temperature and power still cause some variation.
-- **AHA: Wider registers stop helping on big data.** At 2²⁶, XMM was actually faster than YMM. Once the data no longer fits in cache, memory speed matters more than how many elements an instruction can process.
+- **AHA: Wider registers do not mean proportionally faster.** YMM registers are twice as wide as XMM, but YMM was only 1.25–1.42x faster. For a simple kernel like this, memory speed matters more than how many elements an instruction can process.
