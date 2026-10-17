@@ -1,13 +1,12 @@
 ; Matthew Fabreas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
 
-
-; x86-64 scalar
-; rcx = A, rdx = n, result in xmm0
-
 .code
 norm_asm PROC
     xorpd xmm0, xmm0
     xor rax, rax
+
+; zero xmm0 and rax to 0 for index
+
 
 L1:
     cmp rax, rdx
@@ -18,8 +17,15 @@ L1:
     inc rax
     jmp L1
 
+; check first if loop is finished, if not then load double into xmm1 using the addressm, we then square it then add it to xmm0, increment rax and repeat the loop.
+
+
 done:
     sqrtsd xmm0, xmm0
     ret
+
+; get square root if xmm0, final result of Euclid
+
+
 norm_asm ENDP
 END
