@@ -1,32 +1,38 @@
-; Euclidean norm, SIMD AVX2 using XMM (128-bit = 2 doubles per step)
-; double norm_xmm(const double* A, long long n)
-; rcx = A, rdx = n, return value in xmm0
+; Matthew Fabreas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
 
 .code
 norm_xmm PROC
 
-    vxorpd xmm0, xmm0, xmm0             ; 2 partial sums = 0.0
-    xor rax, rax                        ; i = 0
+    vxorpd xmm0, xmm0, xmm0
+    xor rax, rax
 
     mov r8, rdx
-    and r8, -2                          ; r8 = n rounded DOWN to a multiple of 2
-                                        ; (the SIMD loop only runs up to here)
+    and r8, -2
+                                       
+; we zero xmm0 using xor strateg - xor itself is 0,sum = 0, then set i to zero in rax.
+; Make r8 equal to rdx and round down to the nearest multiple of 2, since we are processing 2 doubles at a time in the SIMD loop
 
 simdLoop:
     cmp rax, r8
     jae simdDone
 
-    vmovupd xmm1, XMMWORD PTR [rcx + rax * 8]   ; load 2 doubles
-    vmulpd  xmm1, xmm1, xmm1                    ; square both
-    vaddpd  xmm0, xmm0, xmm1                    ; add into the 2 partial sums
+    vmovupd xmm1, XMMWORD PTR [rcx + rax * 8]
+    vmulpd  xmm1, xmm1, xmm1
+    vaddpd  xmm0, xmm0, xmm1
 
     add rax, 2
     jmp simdLoop
 
+; main loop, check first if i is greater than or equal to r8, if so, we jump to simdDone. 
+; Otherwise, we load 2 doubles from the array, multiplied by 8bytes (size of double) and store them in xmm1. 
+; We then square both doubles in xmm1 and add the result to the partial sums in xmm0. then, we increment i by 2 and repeat the loop.
+
 simdDone:
-    ; horizontal add: partial sum lane0 + lane1 -> lane0
-    vunpckhpd xmm2, xmm0, xmm0          ; copy high double to low position
+    vunpckhpd xmm2, xmm0, xmm0
     vaddsd    xmm0, xmm0, xmm2
+
+; we merge the two sums in xmm0.  We copy the upper sum into the lower position of xmm2, then add xmm2 to the lower position of xmm0.
+; xmm0 will contain the sum of squares of all elements processed in the SIMD loop.
 
 tailLoop:                               ; boundary: leftover 0 or 1 element
     cmp rax, rdx
@@ -39,9 +45,13 @@ tailLoop:                               ; boundary: leftover 0 or 1 element
     inc rax
     jmp tailLoop
 
+; Identical loop from the previous ones we have but in scalar form, we check if i is greater than or equal to n, if so, we jump to finish. 
+; WE NEED THIS or else we will miss the last element if n is odd. so we only process the last element if need be.
+
 finish:
-    vsqrtsd xmm0, xmm0, xmm0            ; Z = sqrt(sum)
+    vsqrtsd xmm0, xmm0, xmm0
     ret
+; square root of total in xmm0, final result of Eueclid
 
 norm_xmm ENDP
 
