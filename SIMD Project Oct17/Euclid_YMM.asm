@@ -1,4 +1,4 @@
-; Matthew Fabreas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
+; Matthew Fabregas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
 
 .code
 norm_ymm PROC

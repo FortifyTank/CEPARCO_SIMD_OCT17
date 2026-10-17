@@ -1,4 +1,4 @@
-; Matthew Fabreas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
+; Matthew Fabregas, Kane Ibanez, Bowen Li, John Teoxon - GROUP 3
 
 .code
 norm_asm PROC
@@ -17,14 +17,14 @@ L1:
     inc rax
     jmp L1
 
-; check first if loop is finished, if not then load double into xmm1 using the addressm, we then square it then add it to xmm0, increment rax and repeat the loop.
+; check first if loop is finished, if not then load double into xmm1 using the address, we then square it then add it to xmm0, increment rax and repeat the loop.
 
 
 done:
     sqrtsd xmm0, xmm0
     ret
 
-; get square root if xmm0, final result of Euclid
+; get square root of xmm0, final result of Euclid
 
 
 norm_asm ENDP
