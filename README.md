@@ -57,11 +57,11 @@ Average execution time in ms over 30 runs.
 
 **Release**
 
-| n | C | x86-64 | XMM | YMM |
-|---|---|---|---|---|
-| 2²⁰ | | | | |
-| 2²⁶ | | | | |
-| 2³⁰ | | | | |
+| n | x86-64 | XMM | YMM |
+|---|---|---|---|
+| 2²⁰ | 0.94x | 1.53x | 2.78x |
+| 2²⁶ | 0.86x | 1.55x | 2.04x |
+| 2³⁰ | 1.01x | 1.79x | 2.35x |
 
 **Speedup over C (Debug)**
 
@@ -111,13 +111,13 @@ The sizes 1, 3, 1000, 1001, 1002 and 1003 cover every leftover case: 0 or 1 elem
 
 ## viii. Analysis
 
-**Which one is fastest?** YMM is the fastest at every size, followed by XMM, then x86-64, then Debug C. At 2³⁰, YMM is 4.11x faster than Debug C and 1.90x faster than x86-64.
+**Which one is fastest?** YMM is the fastest at every size in both builds, followed by XMM. In Debug, x86-64 comes next and C is the slowest. In Release, C and x86-64 are about tied. At 2³⁰, YMM is 4.11x faster than Debug C and 2.35x faster than Release C.
 
 **Why is it faster?** YMM processes 4 doubles per instruction and XMM processes 2, so both need far fewer loop iterations than the scalar version. This means fewer loads, multiplies, adds and loop overhead for the same amount of data.
 
-**Why is the speedup lower than the theoretical 2x and 4x?** In theory XMM should be 2x faster and YMM 4x faster than scalar code. Instead, XMM reaches only 1.5–1.7x and YMM only 1.9–2.3x.
+**Why is the speedup lower than the theoretical 2x and 4x?** In theory XMM should be 2x faster and YMM 4x faster than scalar code. Instead, across both runs XMM reaches only 1.5–1.8x and YMM only 1.9–3.0x.
 
-The main reason is that the kernel is **memory-bound**. Each element needs only one multiply and one add for every 8 bytes loaded, so the CPU can do the math faster than RAM can deliver the data. YMM reads at about 13–15 GB/s at every size, including 2²⁰. This suggests that even the 8 MB vector is not fully served from cache on this machine. Once the CPU is waiting on memory, processing more elements per instruction does not help much. That is why YMM is only 1.25–1.42x faster than XMM even though its registers are twice as wide. The gap is smallest at 2³⁰ (8 GB), where every element has to come from RAM.
+The main reason is that the kernel is **memory-bound**. Each element needs only one multiply and one add for every 8 bytes loaded, so the CPU can do the math faster than RAM can deliver the data. YMM reads at about 13–15 GB/s at every size, including 2²⁰. This suggests that even the 8 MB vector is not fully served from cache on this machine. Once the CPU is waiting on memory, processing more elements per instruction does not help much. That is why YMM is mostly only 1.25–1.4x faster than XMM even though its registers are twice as wide. The gap is smallest at 2²⁶ and 2³⁰, where every element has to come from RAM. Release at 2²⁰ was the one case where YMM pulled further ahead of XMM (1.81x).
 
 Other reasons the speedup is below theory:
 
@@ -125,13 +125,11 @@ Other reasons the speedup is below theory:
 - The loop counter, compare and jump still run on every iteration.
 - Laptop CPUs change clock speed with temperature and power, which adds noise to the timings.
 
-**Debug vs Release:** The assembly kernels are the same in both builds, because Debug and Release only change how the C code is compiled. The main difference between the two runs is therefore the C kernel.
+**Debug vs Release:** The assembly kernels are the same in both builds, because Debug and Release only change how the C code is compiled. The big difference is the C kernel, which became 1.8–2.6x faster in Release because the compiler keeps `i` and `sum` in registers instead of memory. The assembly times also changed a little between the two runs even though the code is identical (x86-64 at 2²⁰ took 1.32 ms in the Debug run and 1.89 ms in the Release run). This shows how much run-to-run noise there is on a laptop.
 
-_(fill after Release run)_
+Release C still gives exactly the same Z as the scalar assembly at every size. This means the compiler did not vectorize the loop. It kept adding the elements one at a time in the original order, because by default MSVC is not allowed to reorder floating-point additions.
 
-**Is SIMD YMM faster than optimized C?**
-
-_(fill after Release run)_
+**Is SIMD YMM faster than optimized C?** Yes. YMM is 2.04–2.78x faster than Release C. The compiler produced scalar code that runs about as fast as our hand-written scalar assembly, while YMM processes 4 elements per instruction. The gain is still well below 4x because, as explained above, the kernel is limited by memory speed.
 
 ## ix. Problems Encountered and AHA Moments
 
