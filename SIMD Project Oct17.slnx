@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="SIMD Project Oct17/SIMD Project Oct17.vcxproj" Id="0f8c3dfd-7198-4049-bdd9-873ba2af7804" />
+</Solution>
