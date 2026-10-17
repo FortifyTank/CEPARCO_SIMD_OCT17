@@ -36,11 +36,12 @@ The SIMD loop only runs up to `n` rounded down to a multiple of 2 (XMM) or 4 (YM
 ## i. Program Output (Execution Time)
 
 **Debug**
-<img width="1200" height="497" alt="debug_output" src="https://github.com/user-attachments/assets/15f261a2-d639-4f49-b623-c2a87b601e92" />
+
+<img width="1919" height="1079" alt="9f3d67ba-e341-4336-8a24-8c654ac5df99 (1)" src="https://github.com/user-attachments/assets/ef34746e-b515-4fc4-b28b-651a19724f90" />
 
 **Release**
 
-<img width="1919" height="1079" alt="Matt_SS" src="https://github.com/user-attachments/assets/e82b3eaa-6b19-4dfc-9d7b-cb5070c18abe" />
+<img width="1919" height="1079" alt="86d50c0e-14d2-441d-8fbd-b055719aff6b" src="https://github.com/user-attachments/assets/a484a719-1718-40c5-82ee-7a1f177dbc73" />
 
 ## ii. Execution Time and Comparison
 
