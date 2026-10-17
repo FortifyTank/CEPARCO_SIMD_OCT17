@@ -8,7 +8,7 @@ norm_ymm PROC
     mov r8, rdx
     and r8, -4
 
-; similar to XMM file, ymm0 xor zeroed then sum = 0 for the 4 lanes cause 4 doubles instead of 2 for YMM, rax is our index then r9 rounded down by 4 so we loop in groups of 4.
+; similar to XMM file, ymm0 xor zeroed then sum = 0 for the 4 lanes cause 4 doubles instead of 2 for YMM, rax is our index then r8 rounded down by 4 so we loop in groups of 4.
 
 
 simdLoop:
@@ -34,7 +34,7 @@ simdDone:
     vaddsd       xmm0, xmm0, xmm1
 
 ; ymm0 will hold the 4 sums of squares, same as xmm file, we extract the upper 2 lanes of ymm0 into xmm1, then add xmm1 to the lower 2 lanes of ymm0.
-; vunpckhpd copy upper of xmm1 to lower of xmm1, then add xmm1 to lower of xmm0, now we have the sum of squares in the lower lane of xmm0.
+; vunpckhpd copy  upper sum of xmm0 to lower of xmm1, then add xmm1 to lower of xmm0, now we have the sum of squares in the lower lane of xmm0.
 
 
 tailLoop:
@@ -49,7 +49,7 @@ tailLoop:
     jmp tailLoop
 
 ; same as XMM file, check if i is greater/equal than n, if so, leave, if not, load 1 double at rcx + rax * 8 addresses, square it then add to sum in xmm0.
-; Need this if for example we still ahve 1-3 indexes that we need to process, we only process the last element if need be.
+; Need this if for example we still have 1-3 indexes that we need to process.
 
 
 finish:
